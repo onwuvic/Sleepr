@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { AUTH_SERVICE, DatabaseModule, LoggerModule } from '@app/common';
+import {
+  AUTH_SERVICE,
+  DatabaseModule,
+  LoggerModule,
+  PAYMENTS_SERVICE,
+} from '@app/common';
 import * as Joi from 'joi';
 
 import {
@@ -24,6 +29,10 @@ import { ReservationsRepository } from './reservations.repository';
       validationSchema: Joi.object({
         MONGODB_URI: Joi.string().required(),
         PORT: Joi.number().required(),
+        PAYMENT_HOST: Joi.string().required(),
+        PAYMENT_PORT: Joi.number().required(),
+        AUTH_HOST: Joi.string().required(),
+        AUTH_PORT: Joi.number().required(),
       }),
     }),
     ClientsModule.registerAsync([
@@ -34,6 +43,17 @@ import { ReservationsRepository } from './reservations.repository';
           options: {
             host: configService.get('AUTH_HOST'),
             port: configService.get('AUTH_PORT'),
+          },
+        }),
+        inject: [ConfigService],
+      },
+      {
+        name: PAYMENTS_SERVICE,
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('PAYMENT_HOST'),
+            port: configService.get('PAYMENT_PORT'),
           },
         }),
         inject: [ConfigService],
