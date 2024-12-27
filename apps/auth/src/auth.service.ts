@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { UserDocument } from '@app/common';
@@ -15,20 +15,24 @@ export class AuthService {
   ) {}
 
   async login(user: UserDocument, response: Response) {
-    const tokenPayload: TokenPayload = {
-      userId: user._id.toHexString(),
-    };
+    try {
+      const tokenPayload: TokenPayload = {
+        userId: user._id.toHexString(),
+      };
 
-    const expires = new Date();
-    expires.setSeconds(
-      expires.getSeconds() + this.configService.get('JWT_TOKEN_EXPIRATION'),
-    );
+      const expires = new Date();
+      expires.setSeconds(
+        expires.getSeconds() + this.configService.get('JWT_TOKEN_EXPIRATION'),
+      );
 
-    const token = this.jwtService.sign(tokenPayload);
+      const token = this.jwtService.sign(tokenPayload);
 
-    response.cookie('Authentication', token, {
-      httpOnly: true,
-      expires,
-    });
+      response.cookie('Authentication', token, {
+        httpOnly: true,
+        expires,
+      });
+    } catch (error) {
+      throw new HttpException('ERROR', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
   }
 }
